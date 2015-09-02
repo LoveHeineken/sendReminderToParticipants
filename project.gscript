@@ -1,0 +1,25 @@
+function main(){
+  var myCalendar = CalendarApp.getCalendarById('ここにidをいれる。idの検索方法はカレンダーの設定から調べる');
+  
+  var now = new Date();
+  //とりあえず24時間以内の予定を調べる
+  var twentyFourHoursFromNow = new Date(now.getTime() + (24 * 60 * 60 * 1000));
+  //「未定」と答えた参加者がいるイベントを調べる
+  var myEventMaybeGuests = myCalendar.getEvents(now, twentyFourHoursFromNow, {statusFilters: [CalendarApp.GuestStatus.MAYBE]});
+  for(i in myEventMaybeGuests) {
+    var target_guests = myEventMaybeGuests[i].getGuestList();
+    for(i in target_guests){
+        var target_email = target_guests[i].getEmail();
+        MailApp.sendEmail(target_email, "件名", "本文");
+    }
+  }
+  //未回答の参加者がいるイベントを調べる
+  var myEventInvitedGuests = myCalendar.getEvents(now, twoHoursFromNow, {statusFilters: [CalendarApp.GuestStatus.INVITED]})
+  for(i in myEventInvitedGuests) {
+    var target_guests = myEventInvitedGuests[i].getGuestList();
+    for(i in target_guests){
+        var target_email = target_guests[i].getEmail();
+        MailApp.sendEmail(target_email, "件名", "本文");
+    }
+  }
+}
