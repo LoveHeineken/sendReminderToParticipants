@@ -1,13 +1,35 @@
-function main() {
+function deleteTrigger(triggerId) {
+  var allTriggers = ScriptApp.getProjectTriggers();
+  for(i in allTriggers){
+    ScriptApp.deleteTrigger(allTriggers[i]);
+  }
+}
+function main(){
+  deleteTrigger();
   var myCalendar = CalendarApp.getCalendarById('your_calendar_id');
   var now = new Date();
   var twoWeeksFromNow = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
-  var events = myCalendar.getEvents(now, twentyFourHoursFromNow);
-  for(i in events) {
-    var guests = events[i].getGuestList();
-    for(x in guests){
-        var target_email = guests[x].getEmail();
-        MailApp.sendEmail(target_email, "件名", "本文");
+  var myEvents = myCalendar.getEvents(now, twoWeeksFromNow);
+  for(i in myEvents) {
+    var notifications = myEvents[i].getEmailReminders();
+      for (y in notifications) {
+      var trigger_time = new Date(myEvents[i].getStartTime() - (notifications[y] * 60 * 1000));
+      ScriptApp.newTrigger("mail").timeBased().at(trigger_time).create();
+    }
+  }
+}
+function mail() {
+  var myCalendar = CalendarApp.getCalendarById('your_calendar_id');
+  var now = new Date();
+  var twoWeeksFromNow = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
+  var myEvents = myCalendar.getEvents(now, twoWeeksFromNow);
+  for(i in myEvents) {
+    var notifications = myEvents[i].getEmailReminders();
+    var guests = myEvents[i].getGuestList();
+    for(x in guests) {
+      if (guests[x].getGuestStatus() == "INVITED" || guests[x].getGuestStatus() == "MAYBE"){
+        MailApp.sendEmail(guests[i].getEmail(), "件名", "本文");
+      }
     }
   }
 }
