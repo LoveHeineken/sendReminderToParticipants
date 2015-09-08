@@ -4,31 +4,51 @@ function deleteTrigger(triggerId) {
     ScriptApp.deleteTrigger(allTriggers[i]);
   }
 }
-function main(){
-  deleteTrigger();
-  var myCalendar = CalendarApp.getCalendarById('your_calendar_id');
+function getCalendarEvents(calendarId){
+  var calendarId = 'your_calendar_id';
+  var myCalendar = CalendarApp.getCalendarById(calendarId);
   var now = new Date();
   var twoWeeksFromNow = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
-  var myEvents = myCalendar.getEvents(now, twoWeeksFromNow);
+  this.myEvents = myCalendar.getEvents(now, twoWeeksFromNow);
   for(i in myEvents) {
-    var notifications = myEvents[i].getEmailReminders();
-      for (y in notifications) {
-      var trigger_time = new Date(myEvents[i].getStartTime() - (notifications[y] * 60 * 1000));
-      ScriptApp.newTrigger("mail").timeBased().at(trigger_time).create();
+    var email_notifications = myEvents[i].getEmailReminders();
+    var eventId = myEvents[i].getId();
+    for (y in email_notifications) {
+      var triggerDateTime = new Date(myEvents[i].getStartTime() - (email_notifications[y] * 60 * 1000));
     }
   }
 }
-function mail() {
-  var myCalendar = CalendarApp.getCalendarById('your_calendar_id');
-  var now = new Date();
-  var twoWeeksFromNow = new Date(now.getTime() + (14 * 24 * 60 * 60 * 1000));
-  var myEvents = myCalendar.getEvents(now, twoWeeksFromNow);
+function makeTriggers(){
+  deleteTrigger();
+  getCalendarEvents();
   for(i in myEvents) {
-    var notifications = myEvents[i].getEmailReminders();
-    var guests = myEvents[i].getGuestList();
-    for(x in guests) {
-      if (guests[x].getGuestStatus() == "INVITED" || guests[x].getGuestStatus() == "MAYBE"){
-        MailApp.sendEmail(guests[i].getEmail(), "件名", "本文");
+    var email_notifications = myEvents[i].getEmailReminders();
+    for (y in email_notifications) {
+      var triggerDateTime = new Date(myEvents[i].getStartTime() - (email_notifications[y] * 60 * 1000));
+      //トリガーは種別でしか取ってこれないため、毎回全て作り直す。
+      ScriptApp.newTrigger("makeTriggers").timeBased().atHour(9).everyDays(1).create();
+      ScriptApp.newTrigger("mail").timeBased().at(triggerDateTime).create();
+    }
+  }
+}
+
+function mail() {
+  getCalendarEvents();
+  for(i in myEvents) {
+    var email_notifications = myEvents[i].getEmailReminders();
+    for (y in email_notifications) {
+      var triggerDateTime = new Date(myEvents[i].getStartTime() - (email_notifications[y] * 60 * 1000) + (15 * 60 * 1000));
+      var fromDateTime = new Date(myEvents[i].getStartTime() - (email_notifications[y] * 60 * 1000) - (15 * 60 * 1000));
+      var now = new Date();
+      if (fromDateTime < now < triggerDateTime) {
+        var guests = myEvents[i].getGuestList();
+        for(x in guests) {
+          if (guests[x].getGuestStatus() == "INVITED" || guests[x].getGuestStatus() == "MAYBE") {
+            MailApp.sendEmail(guests[x].getEmail(), "リマインダーメール確認： " + (myEvents[i].getStartTime().getDate() - new Date().getDate()) + "日後に予定されている「" + 
+            myEvents[i].getTitle() + "」のイベントですが、あなたのステータスは現在" + guests[x].getGuestStatus() + "となっています。"
+            + "イベントの一日前までにカレンダー上でステータスをYesかNoに変更してください", "テスト送信です");
+          }
+        }
       }
     }
   }
