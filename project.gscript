@@ -44,9 +44,9 @@ function mail() {
         var guests = myEvents[i].getGuestList();
         for(x in guests) {
           if (guests[x].getGuestStatus() == "INVITED" || guests[x].getGuestStatus() == "MAYBE") {
-            MailApp.sendEmail(guests[x].getEmail(), "リマインダーメール確認： " + (myEvents[i].getStartTime().getDate() - new Date().getDate()) + "日後に予定されている「" + 
+            MailApp.sendEmail(guests[x].getEmail(), myEvents[i].getTitle() + ”のリマインドメール”, "リマインダーメール確認： " + (myEvents[i].getStartTime().getDate() - new Date().getDate()) +"日後に予定されている「" + 
             myEvents[i].getTitle() + "」のイベントですが、あなたのステータスは現在" + guests[x].getGuestStatus() + "となっています。"
-            + "イベントの一日前までにカレンダー上でステータスをYesかNoに変更してください", "テスト送信です");
+            + "イベントの一日前までにカレンダー上でステータスをYesかNoに変更してください");
           }
         }
       }
